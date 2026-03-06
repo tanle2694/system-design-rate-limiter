@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [ main ]
+    branches: []
 
 jobs:
   deploy:
@@ -12,19 +12,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+      # - name: Setup .NET
+      #   uses: actions/setup-dotnet@v4
+      #   with:
+      #     dotnet-version: '8.0.x'
 
-      - name: Publish application
-        run: dotnet publish src/RateLimiter.Api/RateLimiter.Api.csproj --configuration Release --output ./publish
+      # - name: Publish application
+      #   run: dotnet publish src/RateLimiter.Api/RateLimiter.Api.csproj --configuration Release --output ./publish
 
-      - name: Build Docker image
-        run: docker build -t rate-limiter:${{ github.sha }} -f docker/Dockerfile .
+      # - name: Build Docker image
+      #   run: docker build -t rate-limiter:${{ github.sha }} -f docker/Dockerfile .
 
-      - name: Push Docker image
-        run: |
-          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
-          docker tag rate-limiter:${{ github.sha }} ${{ secrets.REGISTRY_URL }}/rate-limiter:${{ github.sha }}
-          docker push ${{ secrets.REGISTRY_URL }}/rate-limiter:${{ github.sha }}
+      # - name: Push Docker image
+      #   run: |
+      #     echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
+      #     docker tag rate-limiter:${{ github.sha }} ${{ secrets.REGISTRY_URL }}/rate-limiter:${{ github.sha }}
+      #     docker push ${{ secrets.REGISTRY_URL }}/rate-limiter:${{ github.sha }}
