@@ -10,4 +10,5 @@ public interface IRateLimitStore
     Task<string?> GetValue(string key);
     Task SetValue(string key, string value, TimeSpan expiry);
     Task SetExpiry(string key, TimeSpan expiry);
+    Task<(long current, long previous)> GetSlidingWindowCounts(string currentKey, string previousKey);
 }

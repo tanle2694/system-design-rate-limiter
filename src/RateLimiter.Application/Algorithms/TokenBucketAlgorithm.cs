@@ -16,7 +16,7 @@ public sealed class TokenBucketAlgorithm : IRateLimitAlgorithm
 
     public async Task<RateLimitResult> IsAllowed(string clientKey, RateLimitRule rule)
     {
-        var key = $"rl:tb:{clientKey}:{rule.Domain}:{rule.Descriptor}:{rule.DescriptorValue}";
+        var key = $"rl:tb:{{{clientKey}:{rule.Domain}:{rule.Descriptor}:{rule.DescriptorValue}}}";
         var bucketCapacity = rule.RequestsPerUnit;
         var refillRate = (double)rule.RequestsPerUnit / rule.GetWindowSize().TotalSeconds;
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

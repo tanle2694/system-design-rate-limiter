@@ -16,7 +16,7 @@ public sealed class SlidingWindowLogAlgorithm : IRateLimitAlgorithm
 
     public async Task<RateLimitResult> IsAllowed(string clientKey, RateLimitRule rule)
     {
-        var key = $"rl:swl:{clientKey}:{rule.Domain}:{rule.Descriptor}:{rule.DescriptorValue}";
+        var key = $"rl:swl:{{{clientKey}:{rule.Domain}:{rule.Descriptor}:{rule.DescriptorValue}}}";
         var window = rule.GetWindowSize();
         var limit = rule.RequestsPerUnit;
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
