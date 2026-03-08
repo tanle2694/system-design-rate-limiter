@@ -1,0 +1,15 @@
+domain: api
+descriptors:
+  - key: endpoint
+    value: "/hello"
+    rate_limit:
+      algorithm: token_bucket
+      unit: minute
+      requests_per_unit: 10
+
+  - key: endpoint
+    value: "/api/default"
+    rate_limit:
+      algorithm: sliding_window_counter
+      unit: second
+      requests_per_unit: 5
