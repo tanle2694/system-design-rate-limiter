@@ -18,10 +18,22 @@ public static class RateLimiterServiceExtensions
         services.Configure<RateLimiterOptions>(configuration.GetSection(RateLimiterOptions.SectionName));
         services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
 
-        // Redis connection (singleton — connection multiplexer is thread-safe and expensive to create)
+        // Redis Cluster connection (singleton — connection multiplexer is thread-safe and expensive to create)
         var redisOptions = configuration.GetSection(RedisOptions.SectionName).Get<RedisOptions>() ?? new RedisOptions();
         services.AddSingleton<IConnectionMultiplexer>(_ =>
-            ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
+        {
+            var configOptions = new ConfigurationOptions
+            {
+                ConnectTimeout = redisOptions.ConnectTimeout,
+                SyncTimeout = redisOptions.SyncTimeout,
+                Password = redisOptions.Password,
+            };
+
+            foreach (var endpoint in redisOptions.Endpoints)
+                configOptions.EndPoints.Add(endpoint);
+
+            return ConnectionMultiplexer.Connect(configOptions);
+        });
 
         // Infrastructure
         services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();

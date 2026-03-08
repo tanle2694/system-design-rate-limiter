@@ -61,4 +61,18 @@ public sealed class RedisRateLimitStore : IRateLimitStore
     {
         await Db.KeyExpireAsync(key, expiry);
     }
+
+    public async Task<(long current, long previous)> GetSlidingWindowCounts(string currentKey, string previousKey)
+    {
+        var results = (RedisResult[]?)await Db.ScriptEvaluateAsync(
+            LuaScripts.GetSlidingWindowCounts,
+            keys: [currentKey, previousKey]);
+
+        if (results is null || results.Length < 2)
+            return (0, 0);
+
+        var current = (long)results[0];
+        var previous = (long)results[1];
+        return (current, previous);
+    }
 }

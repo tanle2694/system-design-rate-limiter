@@ -24,12 +24,11 @@ public sealed class SlidingWindowCounterAlgorithm : IRateLimitAlgorithm
         var currentWindowId = now.ToUnixTimeSeconds() / windowSizeSeconds;
         var prevWindowId = currentWindowId - 1;
 
-        var prefix = $"rl:swc:{clientKey}:{rule.Domain}:{rule.Descriptor}:{rule.DescriptorValue}";
-        var currentKey = $"{prefix}:{currentWindowId}";
-        var prevKey = $"{prefix}:{prevWindowId}";
+        var hashTag = $"{{{clientKey}:{rule.Domain}:{rule.Descriptor}:{rule.DescriptorValue}}}";
+        var currentKey = $"rl:swc:{hashTag}:{currentWindowId}";
+        var prevKey = $"rl:swc:{hashTag}:{prevWindowId}";
 
-        var currentCount = await _store.GetCounter(currentKey);
-        var prevCount = await _store.GetCounter(prevKey);
+        var (currentCount, prevCount) = await _store.GetSlidingWindowCounts(currentKey, prevKey);
 
         // Weight the previous window by how much of it overlaps with the current window
         var secondsIntoCurrentWindow = now.ToUnixTimeSeconds() % windowSizeSeconds;

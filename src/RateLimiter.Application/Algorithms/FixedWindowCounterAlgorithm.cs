@@ -19,7 +19,7 @@ public sealed class FixedWindowCounterAlgorithm : IRateLimitAlgorithm
         var window = rule.GetWindowSize();
         var windowSizeSeconds = (long)window.TotalSeconds;
         var windowId = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / windowSizeSeconds;
-        var key = $"rl:fw:{clientKey}:{rule.Domain}:{rule.Descriptor}:{rule.DescriptorValue}:{windowId}";
+        var key = $"rl:fw:{{{clientKey}:{rule.Domain}:{rule.Descriptor}:{rule.DescriptorValue}}}:{windowId}";
 
         var count = await _store.IncrementCounter(key, window);
         var limit = rule.RequestsPerUnit;
