@@ -10,7 +10,7 @@ COPY src/RateLimiter.Api/RateLimiter.Api.csproj src/RateLimiter.Api/
 RUN dotnet restore src/RateLimiter.Api/RateLimiter.Api.csproj
 
 COPY src/ src/
-RUN dotnet publish src/RateLimiter.Api/RateLimiter.Api.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish src/RateLimiter.Api/RateLimiter.Api.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
