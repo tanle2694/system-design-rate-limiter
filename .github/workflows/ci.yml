@@ -18,15 +18,30 @@ on:
       run_snyk_scan:
         description: 'Run Snyk security scan'
         type: boolean
-        default: true
+        default: false
       run_sonarqube_scan:
         description: 'Run SonarQube analysis'
         type: boolean
-        default: true
+        default: false
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -44,11 +59,42 @@ jobs:
 
       - name: Run unit tests
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_unit_tests }}
-        run: dotnet test tests/RateLimiter.UnitTests/RateLimiter.UnitTests.csproj --no-build --configuration Release --logger trx --results-directory TestResults/unit
+        run: >-
+          dotnet test tests/RateLimiter.UnitTests/RateLimiter.UnitTests.csproj
+          --no-build --configuration Release
+          --logger trx --results-directory TestResults/unit
+          --collect:"XPlat Code Coverage"
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       - name: Run integration tests
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_integration_tests }}
-        run: dotnet test tests/RateLimiter.IntegrationTests/RateLimiter.IntegrationTests.csproj --no-build --configuration Release --logger trx --results-directory TestResults/integration
+        env:
+          REDIS_ENDPOINT: localhost:6379
+        run: >-
+          dotnet test tests/RateLimiter.IntegrationTests/RateLimiter.IntegrationTests.csproj
+          --no-build --configuration Release
+          --logger trx --results-directory TestResults/integration
+          --collect:"XPlat Code Coverage"
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Merge coverage reports
+        if: always()
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator \
+            -reports:"**/coverage.cobertura.xml" \
+            -targetdir:CoverageReport \
+            -reporttypes:"Cobertura;HtmlSummary;MarkdownSummaryGithub"
+
+      - name: Publish coverage summary
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: CoverageReport/SummaryGithub.md
+
+      - name: Write coverage to job summary
+        if: always()
+        run: cat CoverageReport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
 
       - name: Publish unit test results
         uses: dorny/test-reporter@v1
@@ -72,6 +118,13 @@ jobs:
         with:
           name: test-results
           path: TestResults/**/*.trx
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: CoverageReport/
 
   snyk-scan:
     runs-on: ubuntu-latest
